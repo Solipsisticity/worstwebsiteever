@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { StarBurst, ConstructionGraphic, SuccessClipart } from "@/components/terrible/LocalGraphics";
-import Guestbook from "@/components/terrible/Guestbook";
-import { FakeSearch, NewsletterSignup, MoodRing, WordOfTheDay, SpinWheel, TipJar, NumberGuess, TestimonialsMarquee, WebRing, CookieBanner, NowPlaying, GlobeWidget } from "@/components/terrible/MoreFeatures";
+import { StarBurst, ConstructionGraphic, SuccessClipart } from "../../LocalGraphics";
+import Guestbook from "../../Guestbook";
+import { FakeSearch, NewsletterSignup, MoodRing, WordOfTheDay, SpinWheel, TipJar, NumberGuess, TestimonialsMarquee, WebRing, CookieBanner, NowPlaying, GlobeWidget } from "../../MoreFeatures";
 
 const fontPick = (i) => {
   const fonts = [
@@ -132,8 +132,32 @@ function Calculator() {
   const compute = () => {
     try {
       if (/[^-0-9+\*/.() ]/.test(expr)) { setOut("ERROR (probably)"); return; }
-      // eslint-disable-next-line no-eval
-      setOut(String(eval(expr)));
+      const tokens = expr.match(/\d*\.?\d+|[+\-*/()]/g);
+      if (!tokens || tokens.join("") !== expr.replace(/\s/g, "")) throw new Error("bad math");
+      const values = [];
+      const operators = [];
+      const precedence = { "+": 1, "-": 1, "*": 2, "/": 2 };
+      const apply = () => {
+        const right = values.pop();
+        const left = values.pop();
+        const operator = operators.pop();
+        if (left === undefined || right === undefined) throw new Error("bad math");
+        values.push(operator === "+" ? left + right : operator === "-" ? left - right : operator === "*" ? left * right : left / right);
+      };
+      for (const token of tokens) {
+        if (!Number.isNaN(Number(token))) values.push(Number(token));
+        else if (token === "(") operators.push(token);
+        else if (token === ")") {
+          while (operators.at(-1) !== "(") apply();
+          operators.pop();
+        } else {
+          while (operators.length && operators.at(-1) !== "(" && precedence[operators.at(-1)] >= precedence[token]) apply();
+          operators.push(token);
+        }
+      }
+      while (operators.length) apply();
+      if (values.length !== 1 || !Number.isFinite(values[0])) throw new Error("bad math");
+      setOut(String(values[0]));
     } catch { setOut("ERROR"); }
   };
   return (
