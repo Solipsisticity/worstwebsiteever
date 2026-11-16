@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 
-// Local-only guestbook stored in localStorage. Terrible styling.
 export default function Guestbook() {
   const [entries, setEntries] = useState(() => {
     try { return JSON.parse(localStorage.getItem("terrible_guestbook") || "[]"); } catch { return []; }
